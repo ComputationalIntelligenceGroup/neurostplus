@@ -1,0 +1,70 @@
+---
+title: "Custom morphometrics"
+author: "Bojan Mihaljevic"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+
+
+## Descriptions 
+
+### Distribution along X and Y axes 
+Each neuronal reconstruction consisted of points with Euclidean coordinates, with the center of gravity of the soma located at coordinates $(0,0,0)$. Thus, computing, e.g., the standard deviation along the X axis provided an estimate of arborization extent in the horizontal direction.
+
+#### PCA-derived 
+Following \cite{Yelnik1983neurosciencemethods} we used principal component analysis (PCA) to quantify possible preferential orientation of an arbor along either the X or Y dimension. We set the Z coordinates to zero and quantified such preference with the index of axialization measure of \cite{Yelnik1983neurosciencemethods}, calling it `eccentricity`:
+$$
+\mbox{e} = 1 - \frac{s_2}{s_1},
+$$ 
+where $s_1$ and $s_2$ are standard deviations of the first and second principal components, respectively (thus, $s_1 \geq s_2 \geq 0$). An $\mbox{e}$ towards 1 indicates a strong preference for one axis, whereas an $\mbox{e}$ towards 0 indicates a circular arbor. We used the angle $\theta$ of the main axis (i.e., the first principal component) to a positive X axis passing through the center of mass to quantify the degree of `radial` or tangential orientation of the arbor, namely, 
+$$
+\mbox{r} = (|y| - |x|) \times \mbox{e}, 
+$$
+where $y$ and $x$ are the loadings of the first component on the Y and X axes, respectively, and correspond to $|\sin \theta|$ and $|\cos \theta|$. Thus, $r$ is positive if the tree is ascending or descending, and close to -1 if it mainly arborizes horizontally. To reduce its magnitude for trees that did not have a preference for one of the two directions, we factored in the degree of eccentricity, $e$ (which is always positive). <!-- **This is virtually identical to the ratio of the angles of the standard deviations of X**  -->
+
+#### Moments along the axes (distribution around the soma)
+We computed the mean, standard deviation, and the standardized mean (i.e., the ratio of the mean to the standard deviation) along the X and Y axes. The sign of `y_mean` and `y_std_mean`, for example, may help distinguish between arbors that ascend towards the pial surface or descend towards the white matter; unlike `y_mean`, `y_std_mean` is dimensionless and expresses the arborization preference in terms of the Y extent of the arbor. We also computed the means of $|x|$ and $|y|$ so as to not distinguish between arbors skewed towards the right or the left (or above or below) of the soma, but instead between those arborizing close and far from soma, both horizontally and vertically. The standard deviations indicate the extent along an axis and are very correlated with the `height` and `width` morphometrics. Finally, we computed the ratio of the range along an axis and the standard deviation along that axis (`ratio_x` and `ratio_y`). 
+
+#### Grid analysis
+We split the X and Y plane into \mcrs{20} by \mcrs{20} squares, and computed the number of branches in each square. We recorded the number of non-empty squares (i.e., those containing at least one branch; `grid_area`), as an estimate of the arbor's area, and the mean (\texttt{grid\_mean}) branch count per non-empty square. Finally, we computed the ratio of non-empty \mcrs{100} by \mcrs{100} squares and `grid_area`, to quantify arborization density (`grid_density`), i.e., arbors that tend to occupy a large of portion of a given \mcrs{100} by \mcrs{100} square. 
+
+#### Axon origin
+In order to distinguish axons that originate from below the soma from those that originate above it, we recorded the Y coordinate of the first axonal bifurcation (`axon_origin`), as well as the difference between the minimal path distance from the soma among points more than \mcrs{100} below the soma ($Y < 100 \; \mu m$) and those at least \mcrs{100} above the soma ($Y > 100 \; \mu m$; `axon_above_below`); a positive value would suggest that the arborization begun on the upper side of the soma. 
+
+### Laminar distribution 
+Since we did not know the exact location of the soma within a layer, we could only estimate axonal projection across the layers. For these estimates we relied on layer thickness data from Figure 3 of \cite{Markram2015}, shown in \rtbl{layer-thickness}, assuming that the thickness $T_l$ of layer $l$ follows a Gaussian distribution, $\mathcal{N}(mt_l, st_l)$, where $mt_l$ and $st_l$ are the mean and standard deviation of $T_l$ (given in \rtbl{layer-thickness}).  
+
+The probability of an axon reaching L1 depends on axonal height above the soma, $h_a$, and the distance $D$ from the soma to the center of L1, $c_1$. We modelled $D$ as a sum of two independent random variables, $D = D_l + P$, where $D_l$ is the distance from $c_l$, the center of the soma's layer $l$, to $c_1$, and $P$ the position of the soma with respect to $c_l$ (considering, in both cases, only the Y dimension). Assuming layers' thicknesses are independent, $D_l \sim \mathcal{N}(md_l, sd_l)$, where $$md_l = \frac{mt_1}{2} + \sum_{k=2}^{l-1} mt_k + \frac{mt_l}{2},$$  and $$sd_l = \sqrt{\frac{st_1^2}{4} + \sum_{k=2}^{l-1} st_k^2 + \frac{st_l^2}{4},}$$ where the summation term is omitted for L2 (i.e., $l = 2$). Assuming that $P$ follows $\mathcal{N}(0, \frac{mt_l}{4})$, the sum $D_l + P$ follows $\mathcal{N}(md_l, \sqrt{sd_l ^ 2 + (\frac{mt_l}{4})^2})$ and the probability `l1_prob` of an axon reaching L1 is that of drawing a value equal or greater than $h_a$ from this distribution. Thus, for example, for an L4 cell with its axon extending \mcrs{500} above its soma, the probability of reaching L1 was 0.0005, whereas for one with length \mcrs{700} was 0.6450, i.e., 65% ($md_4 = 679.5$; see \rtbl{layer-thickness}).  <!-- (this includes the entire layer within the central 95% of the probability mass) -->
+
+\input{tex/layer-thickness.tex} 
+
+We estimated the probability $p_a$ of an arbor extending into the layer above as the probability of drawing $h_a$ from a Gaussian distribution $\mathcal{N}(\frac{mt_l}{2}, \frac{mt_l}{4})$, where $h_a$ is the arbor's height above the soma, and $mt_l$, as above, the mean thickness of the soma's layer $l$. We computed the probability $p_b$ of reaching the layer below analogously, setting it to 0 for layer L6. The probability of an arbor being `translaminar` (i.e., not confined to a single layer) was given by $\max\{p_a, p_b\}$.  
+ 
+### MC arborization pattern
+To estimate axonal width in L1 (`l1 width`; MC cells' axons tend to spread out horizontally in this layer), we computed its width in the upper \mcrs{165} (i.e., the thickness of L1) of its arborization and multiplied it with the probability of having reached L1 (`l1_prob`). In an analogous way we estimated the total number of bifurcations in L1 (as a proxy for total arbor extent in that layer). We also estimated the extent to which this arborization grew horizontally (`l1_gx`) and away from the soma (`l1_gxa`), following the assumption that the axon rises vertically approximately above the soma, and ramifies in both horizontal directions in layer L1. `l1_gx` is the sum of all segments' X-axis projections, whereas `l1_gxa` equals `l1_gx` minus the X-axis projections of all segments directed towards the soma (i.e., their initial $X$ coordinate is further from the soma than their terminal coordinate). 
+
+### ChC arborization pattern
+Since ChC cells' axons have short vertical terminals \citep{Markram2004,Somogyi1977}, we counted the number of terminal branches with an extent along the Y axis < \mcrs{50} (\cite{Somogyi1977} reports ChC vertical terminals from \mcrs{10} to \mcrs{50} long) and at least twice as large as the extent along the X axis (`short_vertical_terminals`).  
+
+### Arbor density  
+We quantified arbor density with a number of ratios involving arbor length as the denominator: the ratio of the number of bifurcations and arbor length (`density_bifs`), proportional to the inverse of branch length; the ratio of `area` and arbor length (`density_area`), and, finally, the ratio of average Euclidean distance and total length (`density_dist`).  
+
+### Dendritic bipolarity 
+We quantified whether the dendrites stemmed from opposite ends of the soma and whether those ends are located along a radial (i.e., parallel to the Y) axis, as is the case with bipolar and bitufted dendrites. We did this by applying the above-described PCA-derived analysis to the dendrite insertion points on the soma's surface, after having replicated every insertion point once for each whole $\mu m$ of the corresponding dendrite's length, so as to give more weight to insertion points of longer dendrites, and having set the Z coordinates to 0. A high `insert.eccentricity` thus indicated insertion points along an axis, rather than spread-out across the soma's surface, whereas a high `insert.radial` suggested that the axis was parallel to the Y axis. For cells with a single dendrite insertion point we set `insert.eccentricity` and `insert.radial` to 0. 
+
+### Displaced dendritic arbor 
+To quantify whether the dendritic arbor was displaced \citep{DeFelipe2013} from the axonal one, we averaged the distance to the closest axonal reconstruction point for each point of a dendritic arbor (`displaced`). 
+

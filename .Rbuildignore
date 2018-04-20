@@ -1,0 +1,7 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+bash/*
+bash
+README-extend.md
+^\.travis\.yml$
+^codecov\.yml$

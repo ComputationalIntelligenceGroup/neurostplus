@@ -1,0 +1,23 @@
+Package: neurostrplus
+Type: Package
+Title: Computes neuronal morphometrics.
+Version: 0.1.0
+Author: Mihaljevic Bojan
+Maintainer: Mihaljevic Bojan <bmihaljevic@fi.upm.es>
+Description: Computes neuronal morphometrics. 
+License: GPL-3 + file LICENSE
+Encoding: UTF-8
+Depends:
+    R (>= 3.2.0)
+Imports:
+    jsonlite, moments  ,
+    neurostr,
+    dplyr
+Suggests:
+    testthat(>= 0.8.1) ,
+    knitr,
+    rmarkdown,
+    covr
+LazyData: true
+RoxygenNote: 6.0.1
+VignetteBuilder: knitr
