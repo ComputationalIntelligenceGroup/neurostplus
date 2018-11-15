@@ -6,6 +6,9 @@ map_neurostr_lmeasure <- function() {
   lm <- c(lm, 'Bif_torque_local',   'Bif_ampl_local',          'Bif_tilt_local')
   ns <- c(ns, 'local_torque_angle', "local_bifurcation_angle", "local_tilt_angle")
 
+  lm <- c(lm, 'Diameter')
+  ns <- c(ns, 'diameter')
+
   lm_moments  <- c('min', 'avg', 'std', 'max', 'sum')
   lm <- lapply(lm, paste0, '_', lm_moments)
   lm <- unlist(lm, use.names = FALSE)
