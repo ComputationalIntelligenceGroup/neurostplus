@@ -15,7 +15,7 @@ filter_xyz <- function(both) {
 #' @export
 filter_dont_summarize <- function(branch_node) {
   remove <- c('is_terminal', 'is_pre_terminal', 'is_initial', 'x', 'y', 'z', 'n_tips_left', 'n_tips_right', 'vertex_type', 'change_x', 'change_y', 'change_z')
-  remove <- c(remove, c("extreme_angle", "soma_dist", "N_descs", "box_volume", "local_bifurcation_angle", "node_local_elongation", "node_local_orientation"))
+  remove <- c(remove, c("extreme_angle", "soma_dist", "N_descs", "box_volume", "node_local_elongation", "node_local_orientation"))
   keep <-  setdiff(colnames(branch_node), remove )
   branch_node[ , keep, drop = FALSE ]
 }
