@@ -24,12 +24,20 @@ summarize_branches <- function(branch) {
   vars
 }
 #' Computes vertex ratio
+#' Neurolucida docs: \url{https://www.mbfbioscience.com/help/nx11/Content/Analyses/Vertex_Analysis.htm}
+#' Va: primary vertices connecting 2 pendant vertices (Vp).
+#' Vb: secondary vertices connecting 1 pendant vertex (Vp) to 1 bifurcation (Vd) or 1 trifurcation (Vt).
+#'
+#' Va/Vb>1 suggests that the tree is non-random and symmetrical.
+#' Va/Vb ~ 1 suggests that terminal nodes grew in random processes.
+#' Va/Vb~ 0.5 suggest that segment growth grew the tree.
+#' Va/Vb< 0.5 suggests the tree is non-random and asymmetrical
 #' @return named numeric vector
 compute_vertex_ratio <- function(branch) {
   stopifnot(is_unique_neuron(branch) && is_unique_neurite_type(branch))
-  type_one <- sum(branch$vertex_type == 1, na.rm = TRUE)
-  type_two <- sum(branch$vertex_type == 2, na.rm = TRUE)
-  vertex_ratio <- type_two  / type_one
+  primary <- sum(branch$vertex_type == 2, na.rm = TRUE)
+  secondary <- sum(branch$vertex_type == 1, na.rm = TRUE)
+  vertex_ratio <- primary / secondary
   c(vertex_ratio = vertex_ratio, vertex_type_two = type_two, vertex_type_one = type_one )
 }
 distance_to_soma <- function(node) {
